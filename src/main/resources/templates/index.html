@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sorties App — Événements & Expériences</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        :root {
+            --bg-color: #f6f3ef;
+            --card-bg: #eae4dc;
+            --text-dark: #22201e;
+            --text-muted: #78726a;
+            --accent-warm: #d9c8b4;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .navbar {
+            padding: 25px 0;
+            background: transparent;
+        }
+        .navbar-brand {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+            color: var(--text-dark);
+        }
+        .nav-link {
+            color: var(--text-dark);
+            font-size: 0.9em;
+            margin-left: 20px;
+            font-weight: 400;
+        }
+
+        .hero {
+            padding: 80px 0 60px 0;
+            text-align: center;
+        }
+        .hero-sub {
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            margin-bottom: 15px;
+        }
+        .hero-title-italic {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-size: 3.8rem;
+            font-weight: 400;
+            line-height: 1.1;
+            display: block;
+        }
+        .hero-title-bold {
+            font-size: 4rem;
+            font-weight: 500;
+            letter-spacing: -2px;
+            line-height: 1;
+        }
+
+        .search-box {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: 50px;
+            padding: 6px 10px 6px 25px;
+            max-width: 550px;
+            margin: 40px auto 0 auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+        }
+        .search-input {
+            border: none;
+            background: transparent;
+            font-size: 0.95rem;
+            color: var(--text-dark);
+        }
+        .search-input:focus {
+            box-shadow: none;
+            background: transparent;
+        }
+        .btn-pill {
+            background-color: var(--text-dark);
+            color: #fff;
+            border-radius: 40px;
+            padding: 10px 25px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .btn-pill:hover {
+            background-color: #3b3733;
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+        #map {
+            height: 380px;
+            border-radius: 24px;
+            margin: 50px 0;
+            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.04);
+        }
+
+        .card-event {
+            background-color: #fff;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.04);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
+        }
+        .card-event:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.06);
+        }
+        .card-img-wrapper {
+            height: 240px;
+            overflow: hidden;
+            position: relative;
+        }
+        .card-img-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s ease;
+        }
+        .card-event:hover .card-img-wrapper img {
+            transform: scale(1.05);
+        }
+        .badge-category {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(8px);
+            color: var(--text-dark);
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 6px 14px;
+            border-radius: 30px;
+        }
+        .card-body-custom {
+            padding: 25px;
+        }
+        .card-title-custom {
+            font-size: 1.25rem;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
+        }
+        .card-desc {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+        .card-location {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg">
+    <div class="container">
+        <a class="navbar-brand" href="/">sorties<span style="font-family:'Playfair Display', serif; font-style:italic; font-weight:400;">studio</span></a>
+        <div class="ms-auto d-flex align-items-center">
+            <a class="nav-link" href="/">Index</a>
+            <a class="nav-link" href="#">Projets</a>
+            <a class="nav-link" href="#">Contact</a>
+        </div>
+    </div>
+</nav>
+
+<div class="hero">
+    <div class="container">
+        <p class="hero-sub">Plateforme d'expériences & événements</p>
+        <span class="hero-title-italic">Découvrez les</span>
+        <span class="hero-title-bold">meilleures sorties</span>
+
+        <form action="/" method="get" class="search-box d-flex align-items-center">
+            <input type="text" name="ville" class="form-control search-input" placeholder="Taper une ville (ex: Montigny, Franconville, Paris...)" th:value="${rechercheVille}">
+            <button type="submit" class="btn btn-pill ms-2">Rechercher</button>
+        </form>
+    </div>
+</div>
+
+<div class="container mb-5">
+
+    <div id="map"></div>
+
+    <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+            <h2 style="font-size: 1.8rem; font-weight: 500; letter-spacing: -1px;">Expériences disponibles</h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem;" th:if="${rechercheVille}" th:text="'Résultats filtrés pour ' + ${rechercheVille}"></p>
+        </div>
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        <div class="col" th:each="e : ${evenements}">
+            <div class="card-event">
+                <div class="card-img-wrapper">
+                    <span class="badge-category" th:text="${e.categorie}">Catégorie</span>
+                    <img th:src="${e.imageUrl}" alt="Événement">
+                </div>
+                <div class="card-body-custom">
+                    <div class="card-title-custom" th:text="${e.titre}">Titre de l'événement</div>
+                    <p class="card-desc" th:text="${e.description}">Description de l'événement...</p>
+                    <div class="card-location">
+                        📍 <span th:text="${e.ville}">Ville</span> — <span th:text="${e.adresse}" style="color: var(--text-muted);">Adresse</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:if="${#lists.isEmpty(evenements)}" class="text-center py-5" style="color: var(--text-muted);">
+        <p class="fs-5">Aucune expérience trouvée pour cette localisation.</p>
+    </div>
+
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    var map = L.map('map', { zoomControl: false }).setView([48.8566, 2.3522], 10);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+    }).addTo(map);
+</script>
+</body>
+</html>
